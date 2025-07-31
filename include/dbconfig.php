@@ -2,16 +2,27 @@
 
 class Database {
 
-    private static $hostname = 'localhost:3307';
-    private static $username = 'root';
-    private static $password = '';
-    private static $dbname = 'taotao';
     private static $connection = null;
 
     public static function connect()
     {
-        if(!self::$connection)
-            self::$connection = new PDO("mysql:host=".self::$hostname.";dbname=".self::$dbname, self::$username, self::$password);
+        if (!self::$connection) {
+            $hostname = getenv('DB_HOST');
+            $port     = getenv('DB_PORT');
+            $username = getenv('DB_USER');
+            $password = getenv('DB_PASS');
+            $dbname   = getenv('DB_NAME');
+
+            $dsn = "mysql:host=$hostname;port=$port;dbname=$dbname";
+
+            try {
+                self::$connection = new PDO($dsn, $username, $password);
+                self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            } catch (PDOException $e) {
+                die("Database connection failed: " . $e->getMessage());
+            }
+        }
+
         return self::$connection;
     }
 
