@@ -7,13 +7,13 @@ class Database {
     public static function connect()
     {
         if (!self::$connection) {
-            $hostname = getenv('DB_HOST');
-            $port     = getenv('DB_PORT');
-            $username = getenv('DB_USER');
-            $password = getenv('DB_PASS');
-            $dbname   = getenv('DB_NAME');
+            $hostname = getenv('DB_HOST') ?: 'localhost';
+            $port     = getenv('DB_PORT') ?: '3306';
+            $username = getenv('DB_USER') ?: 'root';
+            $password = getenv('DB_PASS') ?: '';
+            $dbname   = getenv('DB_NAME') ?: 'taotao';
 
-            $dsn = "mysql:host=$hostname;port=$port;dbname=$dbname";
+            $dsn = "mysql:host=$hostname;port=$port;dbname=$dbname;charset=utf8mb4";
 
             try {
                 self::$connection = new PDO($dsn, $username, $password);
@@ -22,7 +22,6 @@ class Database {
                 die("Database connection failed: " . $e->getMessage());
             }
         }
-
         return self::$connection;
     }
 
