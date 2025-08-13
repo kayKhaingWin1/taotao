@@ -10,33 +10,27 @@ $name_error = $email_error = $password_error = $conPass_error = $error = "";
 $name_value = $email_value = "";
 
 if (isset($_POST['submit'])) {
-  $name_value = $_POST['name'];
-  $email_value = $_POST['email'] ?? '';
-  $password = $_POST['password'] ?? '';
-  $con_password = $_POST['con_password'];
+    $name_value = $_POST['name'] ?? '';
+    $email_value = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $con_password = $_POST['con_password'] ?? '';
 
-  $name_error = $email_error = $password_error = $conPass_error = $error = "";
-
-  if (empty($name_value)) {
-    $name_error = "Please enter your name";
-  }
-
-  if (empty($email_value)) {
-    $email_error = "Please enter your email";
-  } elseif (!filter_var($email_value, FILTER_VALIDATE_EMAIL)) {
-    $email_error = "Please enter a valid email address";
-  } else {
-    $emailExists = false;
-    foreach ($users as $user) {
-      if ($email_value == $user['email']) {
-        $emailExists = true;
-        break;
-      }
+    if (empty($name_value)) {
+        $name_error = "Please enter your name";
     }
-    if ($emailExists) {
-      $email_error = "This email is already registered";
+
+    if (empty($email_value)) {
+        $email_error = "Please enter your email";
+    } elseif (!filter_var($email_value, FILTER_VALIDATE_EMAIL)) {
+        $email_error = "Please enter a valid email address";
+    } else {
+        foreach ($users as $user) {
+            if ($email_value == $user['email']) {
+                $email_error = "This email is already registered";
+                break;
+            }
+        }
     }
-  }
 
   if (empty($password)) {
     $password_error = "Please enter your password";

@@ -1,4 +1,44 @@
 <?php
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+
+// session_name('user');
+// session_start();
+// include_once __DIR__ . '/controller/AuthenticationController.php';
+
+// $auth_controller = new AuthenticationController();
+// $users = $auth_controller->getUsers();
+
+// if (isset($_POST['submit'])) {
+    
+//     $email = $_POST['email'] ?? '';
+//     $password = $_POST['password'] ?? '';
+   
+//     if (empty($_POST['email']) && empty($_POST['password'])) {
+//         $error = "Please fill email and password";
+//     } elseif (empty($_POST['email'])) {
+//         $error = "Please fill email";
+//     } elseif (empty($_POST['password'])) {
+//         $error = "Please fill password";
+//     } else {
+//         $credentials_valid = false;
+//         foreach ($users as $user) {
+//             if ($_POST['email'] == $user['email'] && password_verify($_POST['password'], $user['password'])) {
+//                 $_SESSION['id'] = $user['id'];
+//                 $_SESSION['name'] = $user['name'];
+//                 $_SESSION['email'] = $user['email'];
+//                 header('location: index.php');
+//                 $credentials_valid = true;
+//                 break;
+//             }
+//         }
+//         if (!$credentials_valid) {
+//             $error = "Invalid email or password.";
+//         }
+//     }
+// }
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -9,35 +49,33 @@ include_once __DIR__ . '/controller/AuthenticationController.php';
 
 $auth_controller = new AuthenticationController();
 $users = $auth_controller->getUsers();
+$error = "";
 
 if (isset($_POST['submit'])) {
-    
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
    
-    if (empty($_POST['email']) && empty($_POST['password'])) {
+    if (empty($email) && empty($password)) {
         $error = "Please fill email and password";
-    } elseif (empty($_POST['email'])) {
+    } elseif (empty($email)) {
         $error = "Please fill email";
-    } elseif (empty($_POST['password'])) {
+    } elseif (empty($password)) {
         $error = "Please fill password";
     } else {
         $credentials_valid = false;
         foreach ($users as $user) {
-            if ($_POST['email'] == $user['email'] && password_verify($_POST['password'], $user['password'])) {
+            if ($email == $user['email'] && password_verify($password, $user['password'])) {
                 $_SESSION['id'] = $user['id'];
                 $_SESSION['name'] = $user['name'];
                 $_SESSION['email'] = $user['email'];
                 header('location: index.php');
-                $credentials_valid = true;
-                break;
+                exit; 
             }
         }
-        if (!$credentials_valid) {
-            $error = "Invalid email or password.";
-        }
+        $error = "Invalid email or password.";
     }
 }
+
 ?>
 <!doctype html>
 <html lang="en">
