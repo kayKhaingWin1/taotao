@@ -11,8 +11,8 @@ $name_value = $email_value = "";
 
 if (isset($_POST['submit'])) {
   $name_value = $_POST['name'];
-  $email_value = $_POST['email'];
-  $password = $_POST['password'];
+  $email_value = $_POST['email'] ?? '';
+  $password = $_POST['password'] ?? '';
   $con_password = $_POST['con_password'];
 
   $name_error = $email_error = $password_error = $conPass_error = $error = "";

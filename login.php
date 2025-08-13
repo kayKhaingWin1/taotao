@@ -11,6 +11,9 @@ $auth_controller = new AuthenticationController();
 $users = $auth_controller->getUsers();
 
 if (isset($_POST['submit'])) {
+    
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
    
     if (empty($_POST['email']) && empty($_POST['password'])) {
         $error = "Please fill email and password";
