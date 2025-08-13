@@ -40,8 +40,8 @@ public function getFilteredProducts($keyword = null, $filters = [], $sort = null
 
 {
     $sql = "SELECT p.*, 
-               GROUP_CONCAT(DISTINCT c.color_code) AS color_codes,
-               GROUP_CONCAT(DISTINCT s.size) AS sizes,
+               STRING_AGG(DISTINCT c.color_code) AS color_codes,
+               STRING_AGG(DISTINCT s.size) AS sizes,
                b.name AS brand_name,
                sc.name AS subcategory_name
         FROM product p
