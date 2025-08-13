@@ -4,17 +4,15 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 ob_start();
-
 session_name('user');
 session_start();
 include_once __DIR__ . '/controller/AuthenticationController.php';
 
 $auth_controller = new AuthenticationController();
-$users = $auth_controller->getUsers();
 $error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
-    $email = $_POST['email'] ?? '';
+    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL) ?? '';
     $password = $_POST['password'] ?? '';
    
     if (empty($email) && empty($password)) {
@@ -24,21 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     } elseif (empty($password)) {
         $error = "Please fill password";
     } else {
-        $credentials_valid = false;
-        foreach ($users as $user) {
-            if ($email == $user['email'] && password_verify($password, $user['password'])) {
-                $_SESSION['id'] = $user['id'];
-                $_SESSION['name'] = $user['name'];
-                $_SESSION['email'] = $user['email'];
-                ob_end_clean(); 
-                header('location: index.php');
-                exit;
-            }
+        $user = $auth_controller->getUserByEmail($email);
+        
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['id'] = $user['id'];
+            $_SESSION['name'] = $user['name'];
+            $_SESSION['email'] = $user['email'];
+            ob_end_clean();
+            header('Location: index.php');
+            exit;
+        } else {
+            $error = "Invalid email or password.";
         }
-        $error = "Invalid email or password.";
     }
 }
-ob_end_flush(); 
+ob_end_flush();
 ?>
 <!doctype html>
 <html lang="en">

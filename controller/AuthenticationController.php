@@ -30,6 +30,11 @@ class AuthenticationController {
     {
         return $this->auth->getUser($id);
     }
+
+    public function getUserByEmail($email) {
+    return $this->auth->getUserByEmail($email);
+}
+
    public function updateUser($id, $name = null, $email = null, $password = null, $address = null, $phone = null)
 {
     return $this->auth->updateUser($id, $name, $email, $password, $address, $phone);
