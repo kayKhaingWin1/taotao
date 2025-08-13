@@ -1,42 +1,47 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 ob_start();
 session_name('user');
 session_start();
+
+error_log("Session contents: " . print_r($_SESSION, true));
+
 include_once __DIR__ . '/controller/AuthenticationController.php';
 
 $error = "";
+$auth_controller = new AuthenticationController();
 
-if (isset($_POST['submit'])) {
-    if (empty($_SESSION['otp']) || empty($_SESSION['name']) || empty($_SESSION['email']) || empty($_SESSION['password'])) {
-        $error = "Session expired. Please register again.";
-    } elseif ($_POST['otp'] == $_SESSION['otp']) {
-        $auth_controller = new AuthenticationController();
-        $name = $_SESSION['name'];
-        $email = $_SESSION['email'];
-        $password = $_SESSION['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+    $required_vars = ['otp', 'name', 'email', 'password'];
+    foreach ($required_vars as $var) {
+        if (empty($_SESSION[$var])) {
+            $error = "Session expired. Please restart registration.";
+            error_log("Missing session var: $var");
+            break;
+        }
+    }
 
-        $user_id = $auth_controller->createUserAndGetId($name, $email, $password);
-        
+    if (empty($error) && $_POST['otp'] == $_SESSION['otp']) {
+        $user_id = $auth_controller->createUserAndGetId(
+            $_SESSION['name'],
+            $_SESSION['email'],
+            $_SESSION['password']
+        );
+
         if ($user_id) {
             $_SESSION['id'] = $user_id;
-            $_SESSION['name'] = $name;
-            ob_end_clean(); 
+            ob_end_clean();
             header('Location: index.php');
             exit;
         } else {
-            $error = "Failed to create user account.";
+            $error = "Account creation failed. Please try again.";
+            error_log("User creation failed for email: " . $_SESSION['email']);
         }
-    } else {
-        $error = "Invalid OTP.";
+    } elseif (empty($error)) {
+        $error = "Invalid OTP code.";
     }
 }
-ob_end_flush(); 
+ob_end_flush();
 ?>
-
 <!doctype html>
 <html lang="en">
 

@@ -1,14 +1,17 @@
 <?php
 include_once __DIR__ . '/../include/dbconfig.php';
 
-class Authentication {
+class Authentication
+{
     private $conn, $statement;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->conn = Database::connect();
     }
 
-    public function createUser($name, $email, $password) {
+    public function createUser($name, $email, $password)
+    {
         try {
             $sql = 'INSERT INTO "user" (name, email, password) VALUES (:name, :email, :password)';
             $this->statement = $this->conn->prepare($sql);
@@ -22,33 +25,36 @@ class Authentication {
         }
     }
 
+
     public function createUserAndGetId($name, $email, $password) {
     try {
         $sql = 'INSERT INTO "user" (name, email, password) VALUES (:name, :email, :password) RETURNING id';
-        $this->statement = $this->conn->prepare($sql);
-        $this->statement->bindParam(':name', $name);
-        $this->statement->bindParam(':email', $email);
-        $this->statement->bindParam(':password', $password);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':password', $password);
         
-        if ($this->statement->execute()) {
-            $result = $this->statement->fetch(PDO::FETCH_ASSOC);
-            return $result['id'];
+        if ($stmt->execute()) {
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? $result['id'] : false;
         }
         return false;
     } catch (PDOException $e) {
-        error_log("Database error: " . $e->getMessage());
+        error_log("User creation failed: " . $e->getMessage());
         return false;
     }
 }
 
-    public function getUsers() {
+    public function getUsers()
+    {
         $sql = 'SELECT * FROM "user"';
         $this->statement = $this->conn->prepare($sql);
         $this->statement->execute();
         return $this->statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getUser($id) {
+    public function getUser($id)
+    {
         $sql = 'SELECT * FROM "user" WHERE id = :id';
         $this->statement = $this->conn->prepare($sql);
         $this->statement->bindParam(':id', $id);
@@ -56,7 +62,8 @@ class Authentication {
         return $this->statement->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function getUserByEmail($email) {
+    public function getUserByEmail($email)
+    {
         $sql = 'SELECT * FROM "user" WHERE email = :email LIMIT 1';
         $this->statement = $this->conn->prepare($sql);
         $this->statement->bindParam(':email', $email);
@@ -64,7 +71,8 @@ class Authentication {
         return $this->statement->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function updateUser($id, $name = null, $email = null, $password = null, $address = null, $phone = null) {
+    public function updateUser($id, $name = null, $email = null, $password = null, $address = null, $phone = null)
+    {
         $updates = [];
         $params = [':id' => $id];
 
@@ -98,4 +106,3 @@ class Authentication {
         return $this->statement->execute($params);
     }
 }
-?>

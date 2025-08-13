@@ -9,7 +9,8 @@ include_once __DIR__ . '/../vendor/PhpMailer/src/Exception.php';
 include_once __DIR__ . '/../vendor/PhpMailer/src/PHPMailer.php';
 include_once __DIR__ . '/../vendor/PhpMailer/src/SMTP.php';
 
-class AuthenticationController {
+class AuthenticationController
+{
     private $auth;
     function __construct()
     {
@@ -21,9 +22,19 @@ class AuthenticationController {
         return $this->auth->createUser($name, $email, $password);
     }
 
-    public function createUserAndGetId($name, $email, $password) {
-    return $this->auth->createUserAndGetId($name, $email, $password);
-}
+    public function createUserAndGetId($name, $email, $password)
+    {
+        try {
+            $result = $this->auth->createUserAndGetId($name, $email, $password);
+            if (!$result) {
+                error_log("Failed to get user ID after creation");
+            }
+            return $result;
+        } catch (Exception $e) {
+            error_log("Controller error: " . $e->getMessage());
+            return false;
+        }
+    }
 
     public function getUsers()
     {
@@ -35,18 +46,19 @@ class AuthenticationController {
         return $this->auth->getUser($id);
     }
 
-    public function getUserByEmail($email) {
-    return $this->auth->getUserByEmail($email);
-}
+    public function getUserByEmail($email)
+    {
+        return $this->auth->getUserByEmail($email);
+    }
 
-   public function updateUser($id, $name = null, $email = null, $password = null, $address = null, $phone = null)
-{
-    return $this->auth->updateUser($id, $name, $email, $password, $address, $phone);
-}
+    public function updateUser($id, $name = null, $email = null, $password = null, $address = null, $phone = null)
+    {
+        return $this->auth->updateUser($id, $name, $email, $password, $address, $phone);
+    }
     public function otpVerify($email)
     {
-        $otp = rand(1000,9999);
-   
+        $otp = rand(1000, 9999);
+
         $mailer = new PHPMailer(true);
 
         $mailer->isSMTP();
@@ -58,18 +70,15 @@ class AuthenticationController {
         $mailer->Username = "helilin15@gmail.com";
         $mailer->Password = "nkhq krvt kjra otdf";
 
-        $mailer->setFrom("helilin15@gmail.com","TaoTao");
+        $mailer->setFrom("helilin15@gmail.com", "TaoTao");
         $mailer->addAddress($email);
 
         $mailer->IsHTML(true);
         $mailer->Subject = "Your account registration is in progress.";
-        $mailer->Body = 'Your OTP code is '.$otp.'.';
+        $mailer->Body = 'Your OTP code is ' . $otp . '.';
 
-        if ($mailer->send())
-        {
+        if ($mailer->send()) {
             return $otp;
         }
     }
 }
-
-?>
