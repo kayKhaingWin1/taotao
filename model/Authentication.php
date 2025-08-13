@@ -22,6 +22,25 @@ class Authentication {
         }
     }
 
+    public function createUserAndGetId($name, $email, $password) {
+    try {
+        $sql = 'INSERT INTO "user" (name, email, password) VALUES (:name, :email, :password) RETURNING id';
+        $this->statement = $this->conn->prepare($sql);
+        $this->statement->bindParam(':name', $name);
+        $this->statement->bindParam(':email', $email);
+        $this->statement->bindParam(':password', $password);
+        
+        if ($this->statement->execute()) {
+            $result = $this->statement->fetch(PDO::FETCH_ASSOC);
+            return $result['id'];
+        }
+        return false;
+    } catch (PDOException $e) {
+        error_log("Database error: " . $e->getMessage());
+        return false;
+    }
+}
+
     public function getUsers() {
         $sql = 'SELECT * FROM "user"';
         $this->statement = $this->conn->prepare($sql);

@@ -3,32 +3,40 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+ob_start();
 session_name('user');
 session_start();
 include_once __DIR__ . '/controller/AuthenticationController.php';
 
+$error = "";
+
 if (isset($_POST['submit'])) {
-  $name = $_SESSION['name'];
-  $email = $_SESSION['email'];
-  $password = $_SESSION['password'];
-  if ($_POST['otp'] == $_SESSION['otp']) {
-    $auth_controller = new AuthenticationController();
-    $status = $auth_controller->createUser($name, $email, $password);
-    $user_info = $auth_controller->getUsers();
-    foreach ($user_info as $user) {
-      $user_id = $user['id'];
+    if (empty($_SESSION['otp']) || empty($_SESSION['name']) || empty($_SESSION['email']) || empty($_SESSION['password'])) {
+        $error = "Session expired. Please register again.";
+    } elseif ($_POST['otp'] == $_SESSION['otp']) {
+        $auth_controller = new AuthenticationController();
+        $name = $_SESSION['name'];
+        $email = $_SESSION['email'];
+        $password = $_SESSION['password'];
+
+        $user_id = $auth_controller->createUserAndGetId($name, $email, $password);
+        
+        if ($user_id) {
+            $_SESSION['id'] = $user_id;
+            $_SESSION['name'] = $name;
+            ob_end_clean(); 
+            header('Location: index.php');
+            exit;
+        } else {
+            $error = "Failed to create user account.";
+        }
+    } else {
+        $error = "Invalid OTP.";
     }
-    if (!empty($status)) {
-      $_SESSION['id'] = $user_id;
-      $_SESSION['name'] = $name;
-      header('location: index.php');
-      exit;
-    }
-  } else {
-    $error = "Invalid OTP.";
-  }
 }
+ob_end_flush(); 
 ?>
+
 <!doctype html>
 <html lang="en">
 

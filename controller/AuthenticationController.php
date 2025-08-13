@@ -21,6 +21,10 @@ class AuthenticationController {
         return $this->auth->createUser($name, $email, $password);
     }
 
+    public function createUserAndGetId($name, $email, $password) {
+    return $this->auth->createUserAndGetId($name, $email, $password);
+}
+
     public function getUsers()
     {
         return $this->auth->getUsers();
