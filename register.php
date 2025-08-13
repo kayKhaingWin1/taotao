@@ -1,6 +1,9 @@
 <?php
 session_name('user');
 session_start();
+
+ob_start();
+
 include_once __DIR__ . '/controller/AuthenticationController.php';
 
 $auth_controller = new AuthenticationController();
@@ -9,7 +12,7 @@ $users = $auth_controller->getUsers();
 $name_error = $email_error = $password_error = $conPass_error = $error = "";
 $name_value = $email_value = "";
 
-if (isset($_POST['submit'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     $name_value = $_POST['name'] ?? '';
     $email_value = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -32,35 +35,38 @@ if (isset($_POST['submit'])) {
         }
     }
 
-  if (empty($password)) {
-    $password_error = "Please enter your password";
-  } elseif (strlen($password) < 8) {
-    $password_error = "Password must be at least 8 characters";
-  }
-
-  if (empty($con_password)) {
-    $conPass_error = "Please confirm your password";
-  }
-
-  if (empty($name_error) && empty($email_error) && empty($password_error) && empty($conPass_error)) {
-    if ($password != $con_password) {
-      $error = 'Password and Confirm Password do not match.';
-    } else {
-      $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-      $otp = $auth_controller->otpVerify($email_value);
-
-      if (!empty($otp)) {
-        $_SESSION['otp'] = $otp;
-        $_SESSION['name'] = $name_value;
-        $_SESSION['email'] = $email_value;
-        $_SESSION['password'] = $hashed_password;
-        header('location: otp_verify.php');
-        exit;
-      }
+    if (empty($password)) {
+        $password_error = "Please enter your password";
+    } elseif (strlen($password) < 8) {
+        $password_error = "Password must be at least 8 characters";
     }
-  }
+
+    if (empty($con_password)) {
+        $conPass_error = "Please confirm your password";
+    }
+
+    if (empty($name_error) && empty($email_error) && empty($password_error) && empty($conPass_error)) {
+        if ($password != $con_password) {
+            $error = 'Password and Confirm Password do not match.';
+        } else {
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $otp = $auth_controller->otpVerify($email_value);
+
+            if (!empty($otp)) {
+                $_SESSION['otp'] = $otp;
+                $_SESSION['name'] = $name_value;
+                $_SESSION['email'] = $email_value;
+                $_SESSION['password'] = $hashed_password;
+                ob_end_clean(); 
+                header('location: otp_verify.php');
+                exit;
+            }
+        }
+    }
 }
+ob_end_flush(); 
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
