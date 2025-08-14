@@ -10,31 +10,46 @@ class Order
         $this->conn = Database::connect();
     }
 
-public function createOrder($orderCode, $total, $date, $time, $userId, $townshipId)
-{
-    $this->conn = Database::connect();
-    $sql = "INSERT INTO `order`(order_code, total_price, date, time, user_id, township_id) 
-            VALUES(:order_code, :total, :date, :time, :user_id, :township_id)";
-    $this->statement = $this->conn->prepare($sql);
-    $this->statement->bindParam(':order_code', $orderCode);
-    $this->statement->bindParam(':total', $total);
-    $this->statement->bindParam(':date', $date);
-    $this->statement->bindParam(':time', $time);
-    $this->statement->bindParam(':user_id', $userId);
-    $this->statement->bindParam(':township_id', $townshipId);
-    
-    if ($this->statement->execute()) {
-        return $this->conn->lastInsertId();
+    public function createOrder($orderCode, $total, $date, $time, $userId, $townshipId)
+    {
+        try {
+           
+            $sql = 'INSERT INTO "order" (order_code, total_price, date, time, user_id, township_id) 
+                    VALUES (:order_code, :total, :date, :time, :user_id, :township_id)
+                    RETURNING id'; 
+            
+            $this->statement = $this->conn->prepare($sql);
+            $this->statement->bindParam(':order_code', $orderCode);
+            $this->statement->bindParam(':total', $total);
+            $this->statement->bindParam(':date', $date);
+            $this->statement->bindParam(':time', $time);
+            $this->statement->bindParam(':user_id', $userId, PDO::PARAM_INT);
+            $this->statement->bindParam(':township_id', $townshipId, PDO::PARAM_INT);
+            
+            if ($this->statement->execute()) {
+                $result = $this->statement->fetch(PDO::FETCH_ASSOC);
+                return $result['id'];
+            }
+            return false;
+            
+        } catch (PDOException $e) {
+            error_log("Order creation error: " . $e->getMessage());
+            return false;
+        }
     }
-    return false;
-}
 
     public function getOrdersByUserId($user_id)
     {
-        $sql = "SELECT * FROM `order` WHERE user_id = :user_id ORDER BY id DESC";
-        $this->statement = $this->conn->prepare($sql);
-        $this->statement->bindParam(':user_id', $user_id);
-        $this->statement->execute();
-        return $this->statement->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $sql = 'SELECT * FROM "order" WHERE user_id = :user_id ORDER BY id DESC';
+            $this->statement = $this->conn->prepare($sql);
+            $this->statement->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+            $this->statement->execute();
+            return $this->statement->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            error_log("Get orders error: " . $e->getMessage());
+            return [];
+        }
     }
 }
