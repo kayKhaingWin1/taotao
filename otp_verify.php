@@ -3,7 +3,10 @@ ob_start();
 session_name('user');
 session_start();
 
-error_log("Session contents: " . print_r($_SESSION, true));
+// 增强调试日志
+error_log("[OTP_DEBUG] Session ID: " . session_id());
+error_log("[OTP_DEBUG] Session Data: " . print_r($_SESSION, true));
+error_log("[OTP_DEBUG] POST Data: " . print_r($_POST, true));
 
 include_once __DIR__ . '/controller/AuthenticationController.php';
 
@@ -11,34 +14,46 @@ $error = "";
 $auth_controller = new AuthenticationController();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
-    $required_vars = ['otp', 'name', 'email', 'password'];
-    foreach ($required_vars as $var) {
-        if (empty($_SESSION[$var])) {
-            $error = "Session expired. Please restart registration.";
-            error_log("Missing session var: $var");
-            break;
-        }
+  $missing = [];
+  $required_vars = ['otp', 'name', 'email', 'password'];
+  foreach ($required_vars as $var) {
+    if (empty($_SESSION[$var])) {
+      $missing[] = $var;
     }
+  }
 
-    if (empty($error) && $_POST['otp'] == $_SESSION['otp']) {
-        $user_id = $auth_controller->createUserAndGetId(
-            $_SESSION['name'],
-            $_SESSION['email'],
-            $_SESSION['password']
-        );
+  if (!empty($missing)) {
+    $error = "Session expired. Missing: " . implode(', ', $missing);
+    error_log("[OTP_ERROR] $error");
+  } elseif (!isset($_POST['otp']) || !is_numeric($_POST['otp'])) {
+    $error = "Invalid OTP format";
+  } elseif ((string)$_POST['otp'] === (string)$_SESSION['otp']) {
+    error_log("[OTP_DEBUG] OTP验证成功，开始创建用户");
 
-        if ($user_id) {
-            $_SESSION['id'] = $user_id;
-            ob_end_clean();
-            header('Location: index.php');
-            exit;
-        } else {
-            $error = "Account creation failed. Please try again.";
-            error_log("User creation failed for email: " . $_SESSION['email']);
-        }
-    } elseif (empty($error)) {
-        $error = "Invalid OTP code.";
+    $user_id = $auth_controller->createUserAndGetId(
+      $_SESSION['name'],
+      $_SESSION['email'],
+      $_SESSION['password']
+    );
+
+    if ($user_id) {
+      error_log("[OTP_SUCCESS] 用户创建成功，ID: $user_id");
+      $_SESSION['id'] = $user_id;
+      $_SESSION['verified'] = true;
+
+      unset($_SESSION['otp'], $_SESSION['password']);
+
+      ob_end_clean();
+      header('Location: index.php');
+      exit;
+    } else {
+      $error = "Account creation failed. Please contact support.";
+      error_log("[OTP_ERROR] 用户创建失败");
     }
+  } else {
+    $error = "Invalid OTP code. Please try again.";
+    error_log("[OTP_ERROR] OTP不匹配，输入: " . $_POST['otp'] . "，预期: " . $_SESSION['otp']);
+  }
 }
 ob_end_flush();
 ?>
@@ -126,12 +141,19 @@ ob_end_flush();
         <h2>OTP Verify</h2>
       </div>
       <form action="" method="post" class="m-4">
+        <?php if (!empty($error)): ?>
+          <div class="alert alert-danger mb-3">
+            <?= htmlspecialchars($error) ?>
+          </div>
+        <?php endif; ?>
+
         <div class="mb-3 input_group">
-          <input type="number" name="otp" id="" placeholder="OTP Code">
-          <span class="text-danger"><?php if (isset($name_error)) echo $name_error; ?></span>
+          <input type="number" name="otp" required placeholder="OTP Code">
+          <i class="bi bi-shield-lock"></i>
         </div>
+
         <div class="submit_btn d-flex justify-content-center">
-          <button class="btn mb-2" name="submit">Submit</button>
+          <button type="submit" class="btn mb-2" name="submit">Submit</button>
         </div>
       </form>
 </body>
