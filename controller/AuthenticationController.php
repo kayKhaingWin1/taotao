@@ -24,16 +24,7 @@ class AuthenticationController
 
     public function createUserAndGetId($name, $email, $password)
     {
-        try {
-            $result = $this->auth->createUserAndGetId($name, $email, $password);
-            if (!$result) {
-                error_log("Failed to get user ID after creation");
-            }
-            return $result;
-        } catch (Exception $e) {
-            error_log("Controller error: " . $e->getMessage());
-            return false;
-        }
+        return $this->auth->createUserAndGetId($name, $email, $password);
     }
 
     public function getUsers()

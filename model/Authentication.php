@@ -25,26 +25,29 @@ class Authentication
         }
     }
 
-    public function createUserAndGetId($name, $email, $password)
-    {
-        try {
-            $sql = 'INSERT INTO "user" (name, email, password) VALUES (:name, :email, :password) RETURNING id';
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':name', $name, PDO::PARAM_STR);
-            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-            $stmt->bindParam(':password', $password, PDO::PARAM_STR);
-
-            if ($stmt->execute()) {
-                $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                error_log("[DB_DEBUG] 插入用户结果: " . print_r($result, true));
-                return $result ? $result['id'] : false;
-            }
-            return false;
-        } catch (PDOException $e) {
-            error_log("[DB_ERROR] 用户创建失败: " . $e->getMessage());
-            return false;
+public function createUserAndGetId($name, $email, $password) {
+    try {
+        $sql = 'INSERT INTO "user" (name, email, password) VALUES (:name, :email, :password) RETURNING id';
+        error_log("[DB_DEBUG] 准备执行的SQL: ".$sql); 
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':name', $name, PDO::PARAM_STR);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->bindParam(':password', $password, PDO::PARAM_STR);
+        
+        $executeResult = $stmt->execute();
+        error_log("[DB_DEBUG] 执行结果: ".($executeResult ? '成功' : '失败')); 
+        
+        if ($executeResult) {
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            error_log("[DB_DEBUG] 返回结果: ".print_r($result, true));
+            return $result ? $result['id'] : false;
         }
+        return false;
+    } catch (PDOException $e) {
+        error_log("[DB_ERROR] 完整错误信息: Code:".$e->getCode()." | Message:".$e->getMessage());
+        return false;
     }
+}
     public function getUsers()
     {
         $sql = 'SELECT * FROM "user"';
