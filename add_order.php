@@ -53,7 +53,6 @@ try {
         __DIR__ . '/controller/OrderController.php',
         __DIR__ . '/controller/OrderItemController.php',
         __DIR__ . '/controller/CartController.php',
-        __DIR__ . '/../include/dbconfig.php'
     ];
 
     foreach ($requiredFiles as $file) {
