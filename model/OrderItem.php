@@ -10,16 +10,25 @@ class OrderItem
         $this->conn = Database::connect();
     }
 
-    public function createOrderItem($quantity, $price, $product_id, $order_id)
+    public function createOrderItem($quantity, $price, $productId, $orderId)
     {
-        $sql = "INSERT INTO order_item (quantity, price, product_id, order_id)
-                VALUES (:quantity, :price, :product_id, :order_id)";
-        $this->statement = $this->conn->prepare($sql);
-        $this->statement->bindParam(':quantity', $quantity);
-        $this->statement->bindParam(':price', $price);
-        $this->statement->bindParam(':product_id', $product_id);
-        $this->statement->bindParam(':order_id', $order_id);
-        return $this->statement->execute();
+        try {
+            $sql = 'INSERT INTO "order_item" 
+               (quantity, price, product_id, order_id) 
+               VALUES 
+               (:quantity, :price, :product_id, :order_id)';
+
+            $this->statement = $this->conn->prepare($sql);
+            $this->statement->bindParam(':quantity', $quantity, PDO::PARAM_INT);
+            $this->statement->bindParam(':price', $price, PDO::PARAM_INT);
+            $this->statement->bindParam(':product_id', $productId, PDO::PARAM_INT);
+            $this->statement->bindParam(':order_id', $orderId, PDO::PARAM_INT);
+
+            return $this->statement->execute();
+        } catch (PDOException $e) {
+            error_log("OrderItem error: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function getItemsByOrderId($order_id)

@@ -10,33 +10,38 @@ class Order
         $this->conn = Database::connect();
     }
 
-    public function createOrder($orderCode, $total, $date, $time, $userId, $townshipId)
-    {
-        try {
-           
-            $sql = 'INSERT INTO "order" (order_code, total_price, date, time, user_id, township_id) 
-                    VALUES (:order_code, :total, :date, :time, :user_id, :township_id)
-                    RETURNING id'; 
-            
-            $this->statement = $this->conn->prepare($sql);
-            $this->statement->bindParam(':order_code', $orderCode);
-            $this->statement->bindParam(':total', $total);
-            $this->statement->bindParam(':date', $date);
-            $this->statement->bindParam(':time', $time);
-            $this->statement->bindParam(':user_id', $userId, PDO::PARAM_INT);
-            $this->statement->bindParam(':township_id', $townshipId, PDO::PARAM_INT);
-            
-            if ($this->statement->execute()) {
-                $result = $this->statement->fetch(PDO::FETCH_ASSOC);
-                return $result['id'];
-            }
-            return false;
-            
-        } catch (PDOException $e) {
-            error_log("Order creation error: " . $e->getMessage());
-            return false;
+
+    public function createOrder($orderCode, $total, $date, $time, $userId, $townshipId) {
+    try {
+        $total = (int)round($total);
+        
+        $sql = 'INSERT INTO "order" 
+               (order_code, total_price, date, time, user_id, township_id) 
+               VALUES 
+               (:order_code, :total, :date, :time, :user_id, :township_id)
+               RETURNING id';
+        
+        $this->statement = $this->conn->prepare($sql);
+        $this->statement->bindParam(':order_code', $orderCode);
+        $this->statement->bindParam(':total', $total, PDO::PARAM_INT);
+        $this->statement->bindParam(':date', $date);
+        $this->statement->bindParam(':time', $time);
+        $this->statement->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $this->statement->bindParam(':township_id', $townshipId, PDO::PARAM_INT);
+        
+        if (!$this->statement->execute()) {
+            $error = $this->statement->errorInfo();
+            throw new Exception("Database error: " . $error[2]);
         }
+        
+        $result = $this->statement->fetch(PDO::FETCH_ASSOC);
+        return $result['id'] ?? false;
+        
+    } catch (PDOException $e) {
+        error_log("Order creation PDO error: " . $e->getMessage());
+        throw new Exception("Failed to create order: Database error");
     }
+}
 
     public function getOrdersByUserId($user_id)
     {
