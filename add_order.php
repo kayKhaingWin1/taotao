@@ -4,18 +4,17 @@ header('Content-Type: application/json');
 session_name('user');
 session_start();
 
-
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-
+// Validate request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
     exit;
 }
 
-
+// Check user authentication
 $userId = $_SESSION['id'] ?? null;
 if (!$userId) {
     http_response_code(401);
@@ -23,9 +22,11 @@ if (!$userId) {
     exit;
 }
 
+// Validate input data
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input || !isset($input['address'], $input['phone'], $input['township_id'], $input['payment_method'], $input['delivery_fee'])) {
     http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Missing required fields']);
     exit;
 }
 
@@ -43,6 +44,7 @@ try {
         exit;
     }
 
+    // Calculate totals
     $subtotal = array_sum(array_map(function($item) {
         return $item['price'] * $item['quantity'];
     }, $cartItems));
@@ -50,11 +52,11 @@ try {
     $total = $subtotal + floatval($input['delivery_fee']);
     $order_code = 'ORD' . time() . rand(1000, 9999);
 
-
+    // Create the order
     $orderController = new OrderController();
     $orderId = $orderController->createOrder(
         $order_code,
-        $total,
+        $total,  // Will be handled as numeric(10,2)
         date('Y-m-d'),
         date('H:i:s'),
         $userId,
@@ -62,9 +64,10 @@ try {
     );
 
     if (!$orderId) {
-        throw new Exception('Failed to create order');
+        throw new Exception('Failed to create order: No order ID returned');
     }
 
+    // Add order items
     $orderItemController = new OrderItemController();
     foreach ($cartItems as $item) {
         $success = $orderItemController->createOrderItem(
@@ -74,23 +77,33 @@ try {
             $orderId
         );
         if (!$success) {
-            throw new Exception('Failed to add order items');
+            throw new Exception('Failed to add order item for product ID: ' . $item['product_id']);
         }
     }
 
+    // Clear cart only after successful order creation
     $cartController->clearCart($userId);
 
+    // Successful response
     echo json_encode([
         'success' => true,
         'message' => 'Order placed successfully',
-        'order_code' => $order_code
+        'order_code' => $order_code,
+        'order_id' => $orderId
     ]);
 
-} catch (Exception $e) {
+} catch (PDOException $e) {
     http_response_code(500);
-    error_log("Order Error: " . $e->getMessage()); 
+    error_log("Database Error in add_order: " . $e->getMessage()); 
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage() 
+        'message' => 'Database error: ' . $e->getMessage()
+    ]);
+} catch (Exception $e) {
+    http_response_code(500);
+    error_log("General Error in add_order: " . $e->getMessage()); 
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
     ]);
 }

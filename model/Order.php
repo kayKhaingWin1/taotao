@@ -10,43 +10,39 @@ class Order
         $this->conn = Database::connect();
     }
 
-
-    public function createOrder($orderCode, $total, $date, $time, $userId, $townshipId) {
+public function createOrder($orderCode, $total, $date, $time, $userId, $townshipId) {
     try {
-        $total = (int)round($total);
+        $this->conn->beginTransaction();
         
-        $sql = 'INSERT INTO "order" 
+        $sql = 'INSERT INTO orders 
                (order_code, total_price, date, time, user_id, township_id) 
                VALUES 
-               (:order_code, :total, :date, :time, :user_id, :township_id)
-               RETURNING id';
+               (:order_code, :total, :date, :time, :user_id, :township_id)';
         
         $this->statement = $this->conn->prepare($sql);
         $this->statement->bindParam(':order_code', $orderCode);
-        $this->statement->bindParam(':total', $total, PDO::PARAM_INT);
+        $this->statement->bindParam(':total', $total); 
         $this->statement->bindParam(':date', $date);
         $this->statement->bindParam(':time', $time);
         $this->statement->bindParam(':user_id', $userId, PDO::PARAM_INT);
         $this->statement->bindParam(':township_id', $townshipId, PDO::PARAM_INT);
         
-        if (!$this->statement->execute()) {
-            $error = $this->statement->errorInfo();
-            throw new Exception("Database error: " . $error[2]);
-        }
+        $this->statement->execute();
+        $orderId = $this->conn->lastInsertId();
         
-        $result = $this->statement->fetch(PDO::FETCH_ASSOC);
-        return $result['id'] ?? false;
+        $this->conn->commit();
+        return $orderId;
         
     } catch (PDOException $e) {
-        error_log("Order creation PDO error: " . $e->getMessage());
-        throw new Exception("Failed to create order: Database error");
+        $this->conn->rollBack();
+        error_log("Order creation failed: " . $e->getMessage());
+        throw new Exception("Database error: " . $e->getMessage());
     }
 }
-
     public function getOrdersByUserId($user_id)
     {
         try {
-            $sql = 'SELECT * FROM "order" WHERE user_id = :user_id ORDER BY id DESC';
+            $sql = 'SELECT * FROM "orders" WHERE user_id = :user_id ORDER BY id DESC';
             $this->statement = $this->conn->prepare($sql);
             $this->statement->bindParam(':user_id', $user_id, PDO::PARAM_INT);
             $this->statement->execute();
