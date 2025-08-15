@@ -5,75 +5,136 @@ $(document).ready(function () {
 
     $('#township_id').change(updateTotals);
 
-    $('#checkout-form').submit(function(e) {
-        e.preventDefault();
-        
-        const $form = $(this);
-        const $submitBtn = $form.find('button[type="submit"]');
-        const $submitText = $submitBtn.find('.submit-text');
-        const $spinner = $submitBtn.find('.spinner-border');
+    // $('#checkout-form').submit(function(e) {
+    //     e.preventDefault();
 
-        if (!this.checkValidity()) {
-            this.reportValidity();
-            return;
-        }
+    //     const $form = $(this);
+    //     const $submitBtn = $form.find('button[type="submit"]');
+    //     const $submitText = $submitBtn.find('.submit-text');
+    //     const $spinner = $submitBtn.find('.spinner-border');
 
-      
-        const formData = {
-            township_id: $('#township_id').val(),
-            payment_method: $('#payment_method').val(),
-            address: $('#address').val().trim(),
-            phone: $('#phone').val().trim(),
-            delivery_fee: $('#delivery-fee').text().replace(' Ks', '')
-        };
+    //     if (!this.checkValidity()) {
+    //         this.reportValidity();
+    //         return;
+    //     }
 
 
-        $submitBtn.prop('disabled', true);
-        $submitText.text('Processing...');
-        $spinner.removeClass('d-none');
+    //     const formData = {
+    //         township_id: $('#township_id').val(),
+    //         payment_method: $('#payment_method').val(),
+    //         address: $('#address').val().trim(),
+    //         phone: $('#phone').val().trim(),
+    //         delivery_fee: $('#delivery-fee').text().replace(' Ks', '')
+    //     };
 
 
-        $.ajax({
-            url: 'add_order.php',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            dataType: 'json', 
-            success: function(response) {
-                if (response && response.success) {
-                    $('.order-card').html(`
-                        <div class="text-center py-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="#28a745" class="bi bi-check-circle-fill mb-3" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
-                            <h2 class="fw-bold mb-3">Order Placed Successfully!</h2>
-                            <p class="lead mb-4">Your order number is: <strong>${response.order_code}</strong></p>
-                            <div class="d-flex justify-content-center gap-3">
-                                <a href="index.php" class="btn btn-outline-secondary">Continue Shopping</a>
-                            </div>
-                        </div>
-                    `);
-                } else {
-        
-                    showError(response?.message || 'Order submission failed');
-                }
-            },
-            error: function(xhr, status, error) {
-                let errorMsg = 'Request failed: ';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg += xhr.responseJSON.message;
-                } else {
-                    errorMsg += `${xhr.status} ${error}`;
-                }
-                showError(errorMsg);
-            },
-            complete: function() {
-                $submitBtn.prop('disabled', false);
-                $submitText.text('Place Order');
-                $spinner.addClass('d-none');
+    //     $submitBtn.prop('disabled', true);
+    //     $submitText.text('Processing...');
+    //     $spinner.removeClass('d-none');
+
+
+    //     $.ajax({
+    //         url: 'add_order.php',
+    //         type: 'POST',
+    //         contentType: 'application/json',
+    //         data: JSON.stringify(formData),
+    //         dataType: 'json', 
+    //         success: function(response) {
+    //             if (response && response.success) {
+    //                 $('.order-card').html(`
+    //                     <div class="text-center py-4">
+    //                         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="#28a745" class="bi bi-check-circle-fill mb-3" viewBox="0 0 16 16">
+    //                             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+    //                         </svg>
+    //                         <h2 class="fw-bold mb-3">Order Placed Successfully!</h2>
+    //                         <p class="lead mb-4">Your order number is: <strong>${response.order_code}</strong></p>
+    //                         <div class="d-flex justify-content-center gap-3">
+    //                             <a href="index.php" class="btn btn-outline-secondary">Continue Shopping</a>
+    //                         </div>
+    //                     </div>
+    //                 `);
+    //             } else {
+
+    //                 showError(response?.message || 'Order submission failed');
+    //             }
+    //         },
+    //         error: function(xhr, status, error) {
+    //             let errorMsg = 'Request failed: ';
+    //             if (xhr.responseJSON && xhr.responseJSON.message) {
+    //                 errorMsg += xhr.responseJSON.message;
+    //             } else {
+    //                 errorMsg += `${xhr.status} ${error}`;
+    //             }
+    //             showError(errorMsg);
+    //         },
+    //         complete: function() {
+    //             $submitBtn.prop('disabled', false);
+    //             $submitText.text('Place Order');
+    //             $spinner.addClass('d-none');
+    //         }
+    //     });
+    // });
+
+
+        $('#checkout-form').submit(function (e) {
+            e.preventDefault();
+
+            const $form = $(this);
+            const $submitBtn = $form.find('button[type="submit"]');
+            const $submitText = $submitBtn.find('.submit-text');
+            const $spinner = $submitBtn.find('.spinner-border');
+
+            if (!this.checkValidity()) {
+                this.reportValidity();
+                return;
             }
+
+            // 改用FormData格式而不是JSON
+            const formData = new FormData(this);
+            formData.append('delivery_fee', $('#delivery-fee').text().replace(' Ks', ''));
+
+            $submitBtn.prop('disabled', true);
+            $submitText.text('Processing...');
+            $spinner.removeClass('d-none');
+
+            $.ajax({
+                url: 'add_order.php',
+                type: 'POST',
+                data: formData,  // 直接发送FormData
+                processData: false,  // 必须
+                contentType: false,  // 必须
+                dataType: 'json',
+                success: function (response) {
+                    if (response && response.success) {
+                        showSuccess(response);
+                    } else {
+                        showError(response?.message || 'Order submission failed');
+                    }
+                },
+                error: function (xhr) {
+                    let errorMsg = 'Request failed: ';
+                    try {
+                        // 尝试解析可能的JSON错误
+                        const errResponse = xhr.responseJSON || JSON.parse(xhr.responseText);
+                        errorMsg += errResponse.message || errResponse.error || xhr.statusText;
+                    } catch (e) {
+                        // 非JSON响应处理
+                        if (xhr.responseText.includes('<html')) {
+                            errorMsg += 'Server returned HTML error page (check console)';
+                            console.error('HTML Error:', xhr.responseText);
+                        } else {
+                            errorMsg += xhr.statusText || 'Unknown error';
+                        }
+                    }
+                    showError(errorMsg);
+                },
+                complete: function () {
+                    $submitBtn.prop('disabled', false);
+                    $submitText.text('Place Order');
+                    $spinner.addClass('d-none');
+                }
+            });
         });
-    });
 
 
     function updateTotals() {
