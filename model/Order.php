@@ -14,7 +14,7 @@ public function createOrder($orderCode, $total, $date, $time, $userId, $township
     try {
         $this->conn->beginTransaction();
         
-        $sql = 'INSERT INTO orders 
+        $sql = 'INSERT INTO "order"
                (order_code, total_price, date, time, user_id, township_id) 
                VALUES 
                (:order_code, :total, :date, :time, :user_id, :township_id)';
@@ -42,7 +42,7 @@ public function createOrder($orderCode, $total, $date, $time, $userId, $township
     public function getOrdersByUserId($user_id)
     {
         try {
-            $sql = 'SELECT * FROM "orders" WHERE user_id = :user_id ORDER BY id DESC';
+            $sql = 'SELECT * FROM "order" WHERE user_id = :user_id ORDER BY id DESC';
             $this->statement = $this->conn->prepare($sql);
             $this->statement->bindParam(':user_id', $user_id, PDO::PARAM_INT);
             $this->statement->execute();
