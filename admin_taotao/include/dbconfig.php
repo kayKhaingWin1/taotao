@@ -1,40 +1,33 @@
 <?php
 
 class Database {
+
     private static $connection = null;
 
-    public static function connect() {
+    public static function connect()
+    {
         if (!self::$connection) {
+            $hostname = getenv('DB_HOST');
+            $port     = getenv('DB_PORT');
+            $dbname   = getenv('DB_NAME');
+            $username = getenv('DB_USER');
+            $password = getenv('DB_PASS');
+
+            $dsn = "mysql:host=$hostname;port=$port;dbname=$dbname;charset=utf8mb4";
+
             try {
-                self::$connection = new PDO(
-                    "mysql:host=" . getenv('DB_HOST') . 
-                    ";port=" . getenv('DB_PORT') . 
-                    ";dbname=" . getenv('DB_NAME'),
-                    getenv('DB_USER'),
-                    getenv('DB_PASS'),
-                    [
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                        PDO::ATTR_EMULATE_PREPARES => false, 
-                    ]
-                );
+                self::$connection = new PDO($dsn, $username, $password);
+                self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             } catch (PDOException $e) {
-                error_log("Database connection failed: " . $e->getMessage());
-                throw new Exception("Database connection error");
+                die("Database connection failed: " . $e->getMessage());
             }
         }
+
         return self::$connection;
     }
 
-    public static function disconnect() {
+    public function disconnect()
+    {
         self::$connection = null;
     }
 }
-
-try {
-    $db = Database::connect();
-    echo "Connected to FreeDB successfully!";
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage();
-}
-?>
